@@ -1,5 +1,5 @@
 // Get the API URL from the build environment
-const RENDER_SERVER_URL = 'https://your-app-name.onrender.com/api'; // Replace with your actual Render URL
+const RENDER_SERVER_URL = 'https://prepgpt-backend-orl9.onrender.com/api'; // Replace with your actual Render URL
 // const apiUrl = process.env.EXPO_PUBLIC_API_URL || LOCAL_SERVER_URL;
 const apiUrl = 'http://192.168.188.3:5000/api';
 // Determine build type based on API URL or use a more reliable method
