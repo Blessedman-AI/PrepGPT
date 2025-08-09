@@ -6,6 +6,7 @@ import authRoutes from './routes/authRoutes.js';
 import extractRoutes from './routes/extractRoutes.js';
 import userRoutes from './routes/userRoutes.js';
 import usageRoutes from './routes/usageRoutes.js';
+import healthCheckRoute from './routes/healthCheckRoute.js';
 import mongoose from 'mongoose';
 // import authenticateUser from './middleware/auth.js';
 import {
@@ -33,8 +34,9 @@ app.use('/api/quiz', questionRoutes);
 app.use('/api/extract-text', extractRoutes);
 app.use('/api/user', authenticateToken, userRoutes);
 app.use('/api/usage', authenticateToken, usageRoutes);
-
 app.use('/api/reset', resetRoute);
+
+app.use('/api/health', healthCheckRoute);
 
 //Health check
 // app.get('/health', async (req, res) => {
@@ -59,9 +61,9 @@ app.use('/api/reset', resetRoute);
 //   }
 // });
 
-app.get('/health', (req, res) => {
-  res.status(200).json({ status: 'ok', uptime: process.uptime() });
-});
+// app.get('/health', (req, res) => {
+//   res.status(200).json({ status: 'ok', uptime: process.uptime() });
+// });
 
 //Start the server
 app.listen(PORT, '0.0.0.0', () => {
