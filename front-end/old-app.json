@@ -1,0 +1,50 @@
+{
+  "expo": {
+    "scheme": "PrepGPT",
+    "name": "PrepGPT",
+    "slug": "prepgpt",
+    "version": "1.0.0",
+    "jsEngine": "hermes",
+    "orientation": "portrait",
+    "icon": "./assets/icon.png",
+    "userInterfaceStyle": "light",
+    "newArchEnabled": true,
+    "splash": {
+      "image": "./assets/splash.png",
+      "resizeMode": "cover",
+      "backgroundColor": "#fff"
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.bee2025.prepgpt",
+      "infoPlist": {
+        "ITSAppUsesNonExemptEncryption": false
+      }
+    },
+    "android": {
+      "compileSdkVersion": 34,
+      "targetSdkVersion": 34,
+      "buildToolsVersion": "34.0.0",
+      "adaptiveIcon": {
+        "foregroundImage": "./assets/icon.png",
+        "backgroundColor": "#ffffff"
+      },
+      "edgeToEdgeEnabled": true,
+      "package": "com.bee2025.prepgpt"
+    },
+    "web": {
+      "favicon": "./assets/icon1.png"
+    },
+    "extra": {
+      "apiUrl": "http://192.168.0.101:5000/api",
+      "router": {},
+      "eas": {
+        "projectId": "c0be2c28-bc94-463f-abf4-96f495007a50"
+      }
+    },
+    "plugins": [
+      "expo-router"
+    ],
+    "owner": "bee2025"
+  }
+}

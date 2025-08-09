@@ -1,0 +1,44 @@
+{
+  "name": "prepgpt",
+  "version": "1.0.0",
+  "main": "expo-router/entry",
+  "scripts": {
+    "get-ip": "node scripts/get-ip.js",
+    "start": "npm run get-ip && expo start",
+    "start-only": "expo start",
+    "android": "npm run get-ip && expo start --android",
+    "ios": "npm run get-ip && expo start --ios",
+    "web": "npm run get-ip && expo start --web",
+    "build:dev": "npm run get-ip && eas build --profile development",
+    "build:preview": "npm run get-ip && eas build --profile preview",
+    "build:prod": "npm run get-ip && eas build --profile production"
+  },
+  "dependencies": {
+    "@expo/vector-icons": "^14.1.0",
+    "@react-native-async-storage/async-storage": "2.1.2",
+    "axios": "^1.9.0",
+    "expo": "^53.0.20",
+    "expo-constants": "~17.1.5",
+    "expo-dev-client": "~5.2.4",
+    "expo-document-picker": "~13.1.6",
+    "expo-file-system": "~18.1.9",
+    "expo-router": "~5.1.4",
+    "expo-status-bar": "~2.2.3",
+    "expo-store-kit": "^0.0.1",
+    "mammoth": "^1.9.0",
+    "multer": "^2.0.0",
+    "pdf-parse": "^1.1.1",
+    "react": "19.0.0",
+    "react-native": "0.79.5",
+    "react-native-animatable": "^1.4.0",
+    "react-native-keychain": "^10.0.0",
+    "react-native-safe-area-context": "5.4.0",
+    "react-native-screens": "~4.11.1"
+  },
+  "devDependencies": {
+    "@babel/core": "^7.20.0",
+    "@react-native-community/cli": "^19.1.1"
+  },
+  "type": "module",
+  "private": true
+}
