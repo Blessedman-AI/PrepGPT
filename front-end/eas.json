@@ -6,7 +6,8 @@
   "build": {
     "development": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.188.3:5000/api"
+        "EXPO_PUBLIC_API_URL": "http://192.168.188.3:5000/api",
+        "EXPO_PUBLIC_BUILD_TYPE": "development"
       },
       "android": {
         "buildType": "apk"
@@ -20,13 +21,15 @@
         "buildType": "apk"
       },
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://prepgpt-backend-orl9.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://prepgpt-backend-orl9.onrender.com/api",
+        "EXPO_PUBLIC_BUILD_TYPE": "preview"
       }
     },
     "internal": {
       "distribution": "internal",
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://prepgpt-backend-orl9.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://prepgpt-backend-orl9.onrender.com/api",
+        "EXPO_PUBLIC_BUILD_TYPE": "internal"
       },
       "android": {
         "buildType": "apk"
@@ -38,7 +41,8 @@
       },
       "autoIncrement": true,
       "env": {
-        "EXPO_PUBLIC_API_URL": "https://prepgpt-backend-orl9.onrender.com/api"
+        "EXPO_PUBLIC_API_URL": "https://prepgpt-backend-orl9.onrender.com/api",
+        "EXPO_PUBLIC_BUILD_TYPE": "production"
       }
     }
   }

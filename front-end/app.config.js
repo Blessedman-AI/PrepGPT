@@ -1,20 +1,3 @@
-// Get the API URL from the build environment
-const RENDER_SERVER_URL = 'https://prepgpt-backend-orl9.onrender.com/api'; // Replace with your actual Render URL
-// const apiUrl = process.env.EXPO_PUBLIC_API_URL || LOCAL_SERVER_URL;
-const apiUrl = 'http://192.168.188.3:5000/api';
-// Determine build type based on API URL or use a more reliable method
-
-const getBuildType = () => {
-  if (apiUrl.includes('192.168')) {
-    return 'development';
-  } else if (apiUrl.includes('onrender')) {
-    return 'preview';
-  }
-  return 'production';
-};
-
-const buildType = getBuildType();
-
 const configs = {
   development: {
     name: 'PrepGPT Dev',
@@ -38,6 +21,8 @@ const configs = {
   },
 };
 
+// Use a dedicated environment variable for build type instead of inferring from API URL
+const buildType = process.env.EXPO_PUBLIC_BUILD_TYPE || 'production';
 const config = configs[buildType];
 
 export default {
@@ -55,7 +40,6 @@ export default {
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
     },
-
     ios: {
       supportsTablet: true,
       bundleIdentifier: config.bundleId,
@@ -85,13 +69,8 @@ export default {
       favicon: './assets/adaptive-icon.png',
     },
     extra: {
-      // Make sure the API URL is properly passed through
-      apiUrl: apiUrl,
+      apiUrl: process.env.EXPO_PUBLIC_API_URL,
       buildType: buildType,
-      // Add these for debugging
-      originalApiUrl: process.env.EXPO_PUBLIC_API_URL,
-      defaultApiUrl: apiUrl,
-      renderApiUrl: RENDER_SERVER_URL,
       router: {},
       eas: {
         projectId: 'c0be2c28-bc94-463f-abf4-96f495007a50',
