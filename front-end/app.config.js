@@ -1,22 +1,17 @@
 // Get the API URL from the build environment
-const LOCAL_SERVER_URL = 'http://192.168.188.3:5000/api';
+const RENDER_SERVER_URL = 'https://your-app-name.onrender.com/api'; // Replace with your actual Render URL
 // const apiUrl = process.env.EXPO_PUBLIC_API_URL || LOCAL_SERVER_URL;
 const apiUrl = 'http://192.168.188.3:5000/api';
 // Determine build type based on API URL or use a more reliable method
+
 const getBuildType = () => {
   if (apiUrl.includes('192.168')) {
     return 'development';
+  } else if (apiUrl.includes('onrender')) {
+    return 'preview';
   }
   return 'production';
 };
-// const getBuildType = () => {
-//   if (apiUrl.includes('192.168')) {
-//     return 'development';
-//   } else if (apiUrl.includes('/')) {
-//     return 'preview';
-//   }
-//   return 'production';
-// };
 
 const buildType = getBuildType();
 
@@ -95,7 +90,8 @@ export default {
       buildType: buildType,
       // Add these for debugging
       originalApiUrl: process.env.EXPO_PUBLIC_API_URL,
-      defaultApiUrl: LOCAL_SERVER_URL,
+      defaultApiUrl: apiUrl,
+      renderApiUrl: RENDER_SERVER_URL,
       router: {},
       eas: {
         projectId: 'c0be2c28-bc94-463f-abf4-96f495007a50',
