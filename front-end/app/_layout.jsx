@@ -19,21 +19,28 @@ const AuthenticatedLayout = () => {
 
   useEffect(() => {
     // Don't navigate while still loading auth state
-    if (isLoading) {
-      // console.log('🔄 Still loading auth state, waiting...');
-      return;
-    }
+    if (isLoading || segments.length === 0) return;
 
     // console.log('🧭 Navigation check:', { isAuthenticated, segments });
 
     const inAuthScreen =
       segments.includes('login') || segments.includes('signup');
     const protectedScreens = ['paywall', 'quiz-display', 'quiz-results'];
+    const protectedTabRoutes = ['account', 'settings']; // Protect both account and settings tabs
+
     const inProtectedScreen = protectedScreens.some((screen) =>
       segments.includes(screen)
     );
 
-    if (!isAuthenticated && !inAuthScreen) {
+    const inProtectedTabRoutes =
+      segments.includes('(tabs)') &&
+      protectedTabRoutes.some((route) => segments.includes(route));
+
+    if (
+      !isAuthenticated &&
+      !inAuthScreen &&
+      (inProtectedScreen || inProtectedTabRoutes)
+    ) {
       // User is not authenticated and not on auth screens
       console.log('❌ Not authenticated, redirecting to login');
       router.replace('/login');

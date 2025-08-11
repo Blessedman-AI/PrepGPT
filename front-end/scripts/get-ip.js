@@ -4,8 +4,6 @@ import path from 'path';
 
 function getLocalIPAddress() {
   const interfaces = os.networkInterfaces();
-
-  // Priority order: look for WiFi first, then Ethernet, then others
   const priorityOrder = ['Wi-Fi', 'WiFi', 'wlan0', 'Ethernet', 'eth0'];
 
   // First, try priority interfaces
@@ -33,74 +31,31 @@ function getLocalIPAddress() {
 
 function updateConfigFiles(ipAddress) {
   const apiUrl = `http://${ipAddress}:5000/api`;
+  const configPath = path.join(process.cwd(), 'config', 'api.js');
 
-  // Update config/api.js (or wherever you put your API config)
   try {
-    const apiConfigPath = path.join(process.cwd(), 'config', 'api.js');
-
-    // Check if config/api.js exists, if not try other common locations
-    let configPath = apiConfigPath;
-    if (!fs.existsSync(apiConfigPath)) {
-      const alternativePaths = [
-        path.join(process.cwd(), 'constants', 'config.js'),
-        path.join(process.cwd(), 'src', 'config', 'api.js'),
-        path.join(process.cwd(), 'utils', 'api.js'),
-      ];
-
-      configPath = alternativePaths.find((p) => fs.existsSync(p));
-
-      if (!configPath) {
-        console.log(
-          '⚠️  Could not find API config file. Please create config/api.js'
-        );
-        return;
-      }
-    }
-
     let configContent = fs.readFileSync(configPath, 'utf8');
 
-    // Replace the hardcoded development URL
-    const developmentUrlRegex =
-      /(if\s*\(\s*buildType\s*===\s*['"]development['"]\s*\)\s*{\s*[^}]*return\s+['"])http:\/\/[^'"]+(["'])/;
+    // Replace hardcoded IP addresses in URL strings
+    const urlPattern = /http:\/\/[\d.]+:5000\/api/g;
 
-    if (developmentUrlRegex.test(configContent)) {
-      configContent = configContent.replace(
-        developmentUrlRegex,
-        `$1${apiUrl}$2`
-      );
+    if (urlPattern.test(configContent)) {
+      configContent = configContent.replace(urlPattern, apiUrl);
       fs.writeFileSync(configPath, configContent);
-      console.log(
-        `✅ Updated ${path.basename(configPath)} with API URL: ${apiUrl}`
-      );
+      console.log(`✅ Updated config/api.js with API URL: ${apiUrl}`);
     } else {
-      console.log(
-        '⚠️  Could not find development API URL pattern in config file to update'
-      );
-      console.log(
-        '💡 Make sure your config file has the expected structure with buildType === "development" check'
-      );
+      console.log('⚠️  No matching URL pattern found to update');
     }
   } catch (error) {
     console.error('❌ Error updating API config file:', error.message);
   }
-
-  // Note: We no longer update eas.json for development builds since the API URL is handled in JavaScript
-  console.log(
-    'ℹ️  eas.json not updated - development API URL is now handled in JavaScript config'
-  );
-  console.log(
-    'ℹ️  Preview/production builds still use eas.json environment variables'
-  );
 }
 
 try {
   const ipAddress = getLocalIPAddress();
   console.log(`🌐 Detected IP address: ${ipAddress}`);
   updateConfigFiles(ipAddress);
-  console.log('🎉 Config files updated successfully!');
-  console.log(
-    '📱 Your development build will pick up the new IP on next JS update'
-  );
+  console.log('🎉 Config updated successfully!');
 } catch (error) {
   console.error('❌ Error:', error.message);
   process.exit(1);

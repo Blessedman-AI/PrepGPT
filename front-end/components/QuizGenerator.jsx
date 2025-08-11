@@ -45,9 +45,9 @@ const QuizGenerator = () => {
   const [profileData, setProfileData] = useState(null);
   const wordLimit = 1000;
 
-  const { apiCall, user } = useAuth();
-
-  // console.log('🩸👤 User can use prompt', user);
+  const { apiCall, user, isAuthenticated } = useAuth();
+  // console.log('🩸👤 User from QuizGenerator: ', user);
+  console.log('✅🤡 isAuthenticated ', isAuthenticated);
 
   const {
     usageStats,
@@ -201,7 +201,7 @@ const QuizGenerator = () => {
   };
 
   useEffect(() => {
-    if (usageLoading) {
+    if (isAuthenticated && usageLoading) {
       setIsLoading(true);
     } else {
       setIsLoading(false);

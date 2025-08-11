@@ -38,33 +38,6 @@ app.use('/api/reset', resetRoute);
 
 app.use('/api/health', healthCheckRoute);
 
-//Health check
-// app.get('/health', async (req, res) => {
-//   try {
-//     // Try a lightweight DB command to confirm connectivity
-//     await mongoose.connection.db.admin().ping();
-
-//     res.status(200).json({
-//       status: 'ok',
-//       uptime: process.uptime(),
-//       mongo: 'connected',
-//       timestamp: new Date(),
-//     });
-//   } catch (error) {
-//     res.status(500).json({
-//       status: 'error',
-//       uptime: process.uptime(),
-//       mongo: 'disconnected',
-//       timestamp: new Date(),
-//       error: error.message,
-//     });
-//   }
-// });
-
-// app.get('/health', (req, res) => {
-//   res.status(200).json({ status: 'ok', uptime: process.uptime() });
-// });
-
 //Start the server
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`Server running on port ${PORT}`);

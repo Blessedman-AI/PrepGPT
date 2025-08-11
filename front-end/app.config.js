@@ -33,12 +33,17 @@ export default {
     version: '1.0.0',
     jsEngine: 'hermes',
     orientation: 'portrait',
-    userInterfaceStyle: 'light',
+    userInterfaceStyle: 'automatic',
     newArchEnabled: false,
     splash: {
       image: './assets/splash-dark.png',
       resizeMode: 'contain',
       backgroundColor: '#ffffff',
+      dark: {
+        image: './assets/splash-light.png',
+        resizeMode: 'contain',
+        // backgroundColor: '#161616ff',
+      },
     },
     ios: {
       supportsTablet: true,

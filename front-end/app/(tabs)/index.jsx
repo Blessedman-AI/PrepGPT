@@ -11,30 +11,13 @@ import { useAuth } from '../../contexts/authContext';
 
 const Home = () => {
   const { isAuthenticated, isLoading } = useAuth(); // Use auth's isLoading
-  // Remove: const [isLoading, setIsLoading] = useState(true);
 
-  // console.log(
-  //   '🏠 Home screen render - isAuthenticated:',
-  //   isAuthenticated,
-  //   'isLoading:',
-  //   isLoading
-  // );
-  useEffect(() => {
-    // Add global error handler
-    const originalConsoleError = console.error;
-    console.error = (...args) => {
-      console.log('🚨 ERROR CAUGHT:', ...args);
-      originalConsoleError(...args);
-    };
-
-    // Log app startup
-    console.log('🚀 App starting...');
-    console.log('📍 API URL:', process.env.EXPO_PUBLIC_API_URL);
-
-    return () => {
-      console.error = originalConsoleError;
-    };
-  }, []);
+  console.log(
+    '🏠 Home screen render - isAuthenticated:',
+    isAuthenticated,
+    'isLoading:',
+    isLoading
+  );
 
   return (
     <SafeAreaView style={styles.container}>
