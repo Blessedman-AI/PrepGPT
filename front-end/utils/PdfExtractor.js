@@ -7,8 +7,10 @@ import Constants from 'expo-constants';
  */
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
+import { API_URL } from '../config/api';
+
 // const API_URL = 'http://192.168.223.142:5000/api';
-const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// const API_URL = Constants.expoConfig?.extra?.apiUrl;
 
 export async function extractPdfText(fileUri) {
   try {

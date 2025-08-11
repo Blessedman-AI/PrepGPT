@@ -4,12 +4,7 @@ import * as Keychain from 'react-native-keychain';
 import axios from 'axios';
 import Constants from 'expo-constants';
 import axiosInstance from '../utils/axiosInstance';
-console.log(
-  '🩸 authcontext - API_URL from Constants:',
-  Constants.expoConfig?.extra?.apiUrl
-);
-
-const API_URL = Constants.expoConfig?.extra?.apiUrl;
+import { API_URL } from '../config/api';
 
 const AuthContext = createContext();
 

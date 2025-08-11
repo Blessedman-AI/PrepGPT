@@ -1,5 +1,6 @@
 import Constants from 'expo-constants';
 import axios from 'axios';
+import { API_URL } from '../config/api';
 
 /**
  * Generates quiz questions based on provided content
@@ -10,7 +11,7 @@ import axios from 'axios';
  */
 
 // const API_URL = 'http://192.168.223.142:5000/api';
-const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // console.log('API_URL:🩸', API_URL);
 
 export const generateQuestions = async (

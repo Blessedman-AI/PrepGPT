@@ -6,7 +6,6 @@
   "build": {
     "development": {
       "env": {
-        "EXPO_PUBLIC_API_URL": "http://192.168.188.3:5000/api",
         "EXPO_PUBLIC_BUILD_TYPE": "development"
       },
       "android": {

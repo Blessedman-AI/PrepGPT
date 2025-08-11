@@ -69,7 +69,6 @@ export default {
       favicon: './assets/adaptive-icon.png',
     },
     extra: {
-      apiUrl: process.env.EXPO_PUBLIC_API_URL,
       buildType: buildType,
       router: {},
       eas: {

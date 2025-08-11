@@ -3,8 +3,9 @@ import { useState, useCallback } from 'react';
 import * as DocumentPicker from 'expo-document-picker';
 import * as FileSystem from 'expo-file-system';
 import axios from 'axios';
+import { API_URL } from '../config/api';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// const API_URL = Constants.expoConfig?.extra?.apiUrl;
 // console.log('API_URL:🩸', API_URL);
 
 const FileUploader = ({

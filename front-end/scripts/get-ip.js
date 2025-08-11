@@ -34,56 +34,73 @@ function getLocalIPAddress() {
 function updateConfigFiles(ipAddress) {
   const apiUrl = `http://${ipAddress}:5000/api`;
 
-  // Update app.config.js
+  // Update config/api.js (or wherever you put your API config)
   try {
-    const appConfigPath = path.join(process.cwd(), 'app.config.js');
-    let appConfigContent = fs.readFileSync(appConfigPath, 'utf8');
+    const apiConfigPath = path.join(process.cwd(), 'config', 'api.js');
 
-    // Replace the hardcoded URL in the apiUrl field (handles both with and without quotes around key)
-    // const apiUrlRegex = /(apiUrl:\s*)['"]http:\/\/[^'"]+['"]/;
-    // const replacement = `$1'${apiUrl}'`;
-    const apiUrlRegex =
-      /(const\s+LOCAL_SERVER_URL\s*=\s*['"])http:\/\/[^'"]+(["'];)/;
-    const replacement = `$1${apiUrl}$2`;
+    // Check if config/api.js exists, if not try other common locations
+    let configPath = apiConfigPath;
+    if (!fs.existsSync(apiConfigPath)) {
+      const alternativePaths = [
+        path.join(process.cwd(), 'constants', 'config.js'),
+        path.join(process.cwd(), 'src', 'config', 'api.js'),
+        path.join(process.cwd(), 'utils', 'api.js'),
+      ];
 
-    if (apiUrlRegex.test(appConfigContent)) {
-      appConfigContent = appConfigContent.replace(apiUrlRegex, replacement);
-      fs.writeFileSync(appConfigPath, appConfigContent);
-      console.log(`✅ Updated app.config.js with API URL: ${apiUrl}`);
+      configPath = alternativePaths.find((p) => fs.existsSync(p));
+
+      if (!configPath) {
+        console.log(
+          '⚠️  Could not find API config file. Please create config/api.js'
+        );
+        return;
+      }
+    }
+
+    let configContent = fs.readFileSync(configPath, 'utf8');
+
+    // Replace the hardcoded development URL
+    const developmentUrlRegex =
+      /(if\s*\(\s*buildType\s*===\s*['"]development['"]\s*\)\s*{\s*[^}]*return\s+['"])http:\/\/[^'"]+(["'])/;
+
+    if (developmentUrlRegex.test(configContent)) {
+      configContent = configContent.replace(
+        developmentUrlRegex,
+        `$1${apiUrl}$2`
+      );
+      fs.writeFileSync(configPath, configContent);
+      console.log(
+        `✅ Updated ${path.basename(configPath)} with API URL: ${apiUrl}`
+      );
     } else {
       console.log(
-        '⚠️  Could not find apiUrl pattern in app.config.js to update'
+        '⚠️  Could not find development API URL pattern in config file to update'
+      );
+      console.log(
+        '💡 Make sure your config file has the expected structure with buildType === "development" check'
       );
     }
   } catch (error) {
-    console.error('❌ Error updating app.config.js:', error.message);
+    console.error('❌ Error updating API config file:', error.message);
   }
 
-  // Update eas.json
-  try {
-    const easJsonPath = path.join(process.cwd(), 'eas.json');
-    const easJsonContent = JSON.parse(fs.readFileSync(easJsonPath, 'utf8'));
-
-    // Update all build profiles that have EXPO_PUBLIC_API_URL
-    if (easJsonContent.build.development?.env?.EXPO_PUBLIC_API_URL) {
-      easJsonContent.build.development.env.EXPO_PUBLIC_API_URL = apiUrl;
-    }
-    if (easJsonContent.build.production?.env?.EXPO_PUBLIC_API_URL) {
-      easJsonContent.build.production.env.EXPO_PUBLIC_API_URL = apiUrl;
-    }
-
-    fs.writeFileSync(easJsonPath, JSON.stringify(easJsonContent, null, 2));
-    console.log(`✅ Updated eas.json with API URL: ${apiUrl}`);
-  } catch (error) {
-    console.error('❌ Error updating eas.json:', error.message);
-  }
+  // Note: We no longer update eas.json for development builds since the API URL is handled in JavaScript
+  console.log(
+    'ℹ️  eas.json not updated - development API URL is now handled in JavaScript config'
+  );
+  console.log(
+    'ℹ️  Preview/production builds still use eas.json environment variables'
+  );
 }
 
 try {
   const ipAddress = getLocalIPAddress();
   console.log(`🌐 Detected IP address: ${ipAddress}`);
   updateConfigFiles(ipAddress);
-  console.log('🎉 All config files updated successfully!');
+  console.log('🎉 Config files updated successfully!');
+  console.log(
+    '📱 Your development build will pick up the new IP on next JS update'
+  );
 } catch (error) {
   console.error('❌ Error:', error.message);
   process.exit(1);

@@ -11,8 +11,9 @@ import {
 import axios from 'axios';
 import { SafeAreaView } from 'react-native-safe-area-context';
 import { useAuth } from '../../contexts/authContext';
+import { API_URL } from '../../config/api';
 
-const API_URL = Constants.expoConfig?.extra?.apiUrl;
+// const API_URL = Constants.expoConfig?.extra?.apiUrl;
 
 const ResetUsageScreen = () => {
   const [isResetting, setIsResetting] = useState(false);
