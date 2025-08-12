@@ -38,11 +38,11 @@ export default {
     splash: {
       image: './assets/splash-dark.png',
       resizeMode: 'contain',
-      backgroundColor: '#ffffff',
+      // backgroundColor: '#ffffff',
       dark: {
         image: './assets/splash-light.png',
         resizeMode: 'cover',
-        backgroundColor: '#ff1111ff',
+        // backgroundColor: '#161616ff',
       },
     },
     ios: {
