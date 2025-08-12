@@ -41,8 +41,8 @@ export default {
       backgroundColor: '#ffffff',
       dark: {
         image: './assets/splash-light.png',
-        resizeMode: 'contain',
-        // backgroundColor: '#161616ff',
+        resizeMode: 'cover',
+        backgroundColor: '#ff1111ff',
       },
     },
     ios: {
