@@ -5,17 +5,34 @@ import {
   View,
   ActivityIndicator,
 } from 'react-native';
+import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '../contexts/authContext.js';
 import { StatusBar } from 'expo-status-bar';
 import { Stack, useRouter, useSegments } from 'expo-router';
-
 import { useEffect } from 'react';
+
+// Prevent the splash screen from auto-hiding before asset loading is complete
+SplashScreen.preventAutoHideAsync();
 
 const AuthenticatedLayout = () => {
   const colorScheme = useColorScheme();
   const { isAuthenticated, isLoading } = useAuth();
   const segments = useSegments();
   const router = useRouter();
+
+  useEffect(() => {
+    // Hide splash screen after 3 seconds (3000ms)
+    const timer = setTimeout(async () => {
+      try {
+        await SplashScreen.hideAsync();
+      } catch (error) {
+        console.warn('Failed to hide splash screen:', error);
+        // Splash screen might already be hidden, which is fine
+      }
+    }, 3000); // Adjust this duration as needed
+
+    return () => clearTimeout(timer);
+  }, []);
 
   useEffect(() => {
     // Don't navigate while still loading auth state
