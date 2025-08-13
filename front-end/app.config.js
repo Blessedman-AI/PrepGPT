@@ -42,7 +42,7 @@ export default {
       dark: {
         image: './assets/splash-light.png',
         resizeMode: 'cover',
-        backgroundColor: '#161616ff',
+        // backgroundColor: '#161616ff',
       },
     },
     ios: {
