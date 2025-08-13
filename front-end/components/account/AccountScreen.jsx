@@ -177,8 +177,8 @@ const AccountScreen = () => {
                 ]}
               >
                 {profileData?.subscriptionTier
-                  ? profileData.subscriptionTier.charAt(0).toUpperCase() +
-                    profileData.subscriptionTier.slice(1).toLowerCase() +
+                  ? profileData.subscriptionTier.charAt(0)?.toUpperCase() +
+                    profileData.subscriptionTier.slice(1)?.toLowerCase() +
                     ' ' +
                     'tier'
                   : 'Free tier'}
