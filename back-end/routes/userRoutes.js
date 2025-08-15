@@ -84,7 +84,7 @@ router.put('/profile', async (req, res) => {
 
     // Check if email is already taken by another user
     const existingUser = await User.findOne({
-      email: email.toLowerCase(),
+      email: email?.toLowerCase(),
       _id: { $ne: userId },
     });
 
@@ -100,7 +100,7 @@ router.put('/profile', async (req, res) => {
       userId,
       {
         name: name.trim(),
-        email: email.toLowerCase().trim(),
+        email: email?.toLowerCase().trim(),
       },
       { new: true, runValidators: true }
     ).select('-password');

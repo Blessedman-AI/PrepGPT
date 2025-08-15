@@ -117,8 +117,8 @@ ${content}`;
 
     // Special handling for random topic requests
     if (
-      content.toLowerCase().includes('random topic') ||
-      content.toLowerCase().includes('quiz me')
+      content?.toLowerCase().includes('random topic') ||
+      content?.toLowerCase().includes('quiz me')
     ) {
       promptText += `
 IMPORTANT: Choose a DIFFERENT random topic than what you've chosen before. Do not pick astronomy, planets, or space unless explicitly requested. Vary between technology, history, science, literature, geography, sports, or other interesting domains. Each request should produce questions from a completely different domain.`;

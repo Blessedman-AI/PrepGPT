@@ -35,16 +35,17 @@ export default {
     orientation: 'portrait',
     userInterfaceStyle: 'automatic',
     newArchEnabled: false,
-    splash: {
-      image: './assets/splash-dark.png',
-      resizeMode: 'contain',
-      // backgroundColor: '#ffffff',
-      dark: {
-        image: './assets/splash-light.png',
-        resizeMode: 'cover',
-        // backgroundColor: '#161616ff',
-      },
-    },
+    // splash: {
+    //   image: './assets/splash-dark.png',
+    //   resizeMode: 'contain',
+    //   backgroundColor: '#ffffff',
+    //   dark: {
+    //     image: './assets/splash-light.png',
+    //     resizeMode: 'contain',
+    //     // backgroundColor: '#66b2b2',
+    //     backgroundColor: '#3a3a3aff',
+    //   },
+    // },
     ios: {
       supportsTablet: true,
       bundleIdentifier: config.bundleId,
@@ -77,10 +78,30 @@ export default {
       buildType: buildType,
       router: {},
       eas: {
-        projectId: 'c0be2c28-bc94-463f-abf4-96f495007a50',
+        projectId: '95d81974-444b-482a-9481-225ce2e2d186',
       },
+      // eas: {
+      //   projectId: 'c0be2c28-bc94-463f-abf4-96f495007a50',
+      // },
     },
-    plugins: ['expo-router'],
-    owner: 'bee2025',
+    plugins: [
+      'expo-router',
+      [
+        'expo-splash-screen',
+        {
+          backgroundColor: '#ffffff',
+          image: './assets/splash-dark.png',
+          resizeMode: 'contain',
+          dark: {
+            image: './assets/splash-light.png',
+            resizeMode: 'contain',
+            backgroundColor: '#000000',
+          },
+          imageWidth: 200,
+        },
+      ],
+    ],
+    owner: 'diokpa',
+    // owner: 'bee2025',
   },
 };
