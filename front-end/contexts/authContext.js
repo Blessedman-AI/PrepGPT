@@ -142,7 +142,8 @@ export const AuthProvider = ({ children }) => {
     } catch (error) {
       console.error('Token refresh failed:', error);
       await signOut();
-      throw new Error('Session expired. Please log in again.');
+      throw error;
+      // throw new Error('Session expired. Please log in again.');
     }
   };
 
@@ -190,63 +191,81 @@ export const AuthProvider = ({ children }) => {
       ? endpoint
       : `${API_URL}${endpoint}`;
 
-    console.log('🔥 API Call Debug:');
-    console.log('- Endpoint:', endpoint);
-    console.log('- API_URL:', API_URL);
-    console.log('- Full URL:', fullUrl);
-    console.log('- Token exists:', !!state.token);
+    // For authenticated users, handle token refresh logic
+    if (state.user && state.token) {
+      let token = state.token;
 
-    let token = state.token;
-
-    // Check if current token is expired or missing
-    if (!token || isTokenExpired(token)) {
-      console.log('Token expired or missing, attempting refresh...');
-      try {
-        token = await refreshToken();
-      } catch (error) {
-        throw error; // This will trigger sign out in refreshToken function
-      }
-    }
-
-    try {
-      const response = await axios({
-        url: fullUrl,
-        method: options.method || 'get',
-        data: options.data,
-        params: options.params,
-        headers: {
-          ...(options.headers || {}),
-          Authorization: `Bearer ${token}`,
-          'Content-Type': 'application/json',
-        },
-      });
-      return response;
-    } catch (error) {
-      if (error.response && error.response.status === 401) {
-        console.log('Received 401, attempting token refresh...');
+      // Check if current token is expired
+      if (isTokenExpired(token)) {
+        console.log('Token expired, attempting refresh...');
         try {
-          // Try to refresh token once
-          const newToken = await refreshToken();
-
-          // Retry the original request with new token
-          const retryResponse = await axios({
-            url: fullUrl,
-            method: options.method || 'get',
-            data: options.data,
-            params: options.params,
-            headers: {
-              ...(options.headers || {}),
-              Authorization: `Bearer ${newToken}`,
-              'Content-Type': 'application/json',
-            },
-          });
-          return retryResponse;
-        } catch (refreshError) {
-          // Refresh failed, user needs to login again
-          throw refreshError;
+          token = await refreshToken();
+        } catch (error) {
+          throw error; // This will trigger sign out in refreshToken function
         }
       }
-      throw error;
+
+      try {
+        const response = await axios({
+          url: fullUrl,
+          method: options.method || 'get',
+          data: options.data,
+          params: options.params,
+          headers: {
+            ...(options.headers || {}),
+            Authorization: `Bearer ${token}`,
+            'Content-Type': 'application/json',
+          },
+        });
+        return response;
+      } catch (error) {
+        console.error('❌API call error:', error.response.data);
+        if (error.response && error.response.status === 401) {
+          console.log('🤢Received 401, attempting token refresh...');
+          try {
+            // Try to refresh token once
+            const newToken = await refreshToken();
+
+            // Retry the original request with new token
+            const retryResponse = await axios({
+              url: fullUrl,
+              method: options.method || 'get',
+              data: options.data,
+              params: options.params,
+              headers: {
+                ...(options.headers || {}),
+                Authorization: `Bearer ${newToken}`,
+                'Content-Type': 'application/json',
+              },
+            });
+            return retryResponse;
+          } catch (refreshError) {
+            throw refreshError;
+          }
+        }
+        throw error;
+      }
+    } else {
+      // For guest users (no authentication), make request without token
+      console.log(
+        '✅apiCall from authContext - Making guest API call (no authentication)'
+      );
+      try {
+        const response = await axios({
+          url: fullUrl,
+          method: options.method || 'get',
+          data: options.data,
+          params: options.params,
+          headers: {
+            ...(options.headers || {}),
+            'Content-Type': 'application/json',
+            // No Authorization header for guests
+          },
+        });
+        return response;
+      } catch (error) {
+        throw error;
+      }
     }
   };
 
@@ -270,13 +289,15 @@ export const AuthProvider = ({ children }) => {
 
       // Store both tokens
       await storeToken(data.token, data.user, data.refreshToken);
+
       dispatch({
         type: 'SIGN_IN',
         token: data.token,
         user: data.user,
       });
 
-      return { success: true };
+      // return { success: true };
+      return { success: true, user: data.user };
     } catch (error) {
       console.error('🤮 authContext - Login error:', error.message, {
         // message: error.message,
@@ -332,19 +353,6 @@ export const AuthProvider = ({ children }) => {
     await removeStoredToken();
     dispatch({ type: 'SIGN_OUT' });
   };
-
-  // const restoreToken = async () => {
-  //   const stored = await getStoredToken();
-  //   if (stored && !isTokenExpired(stored.token)) {
-  //     dispatch({
-  //       type: 'RESTORE_TOKEN',
-  //       token: stored.token,
-  //       user: stored.user,
-  //     });
-  //   } else {
-  //     dispatch({ type: 'RESTORE_TOKEN', token: null, user: null });
-  //   }
-  // };
 
   const restoreToken = async () => {
     // console.log('🚀 App starting, checking for stored tokens...');

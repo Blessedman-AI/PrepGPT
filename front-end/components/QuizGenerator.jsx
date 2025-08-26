@@ -13,9 +13,11 @@ import {
   TouchableWithoutFeedback,
   ActivityIndicator,
   Alert,
+  Modal,
+  FlatList,
 } from 'react-native';
 import { SafeAreaView } from 'react-native-safe-area-context';
-import React, { useState, useEffect, use } from 'react';
+import React, { useState, useEffect, use, useRef } from 'react';
 import { useRouter } from 'expo-router';
 
 import DocumentUploadDisplay from './DocumentUploadDisplay';
@@ -29,7 +31,7 @@ import getErrorMessage from '../utils/errorHandler';
 
 const QuizGenerator = () => {
   const [numQuestionsText, setNumQuestionsText] = useState('3');
-  const [numQuestions, setNumQuestions] = useState(3);
+  const [numQuestions, setNumQuestions] = useState(1);
   const [inputTab, setInputTab] = useState('prompt');
   const [content, setContent] = useState('');
   const [questions, setQuestions] = useState(null);
@@ -43,11 +45,15 @@ const QuizGenerator = () => {
   const [keyboardVisible, setKeyboardVisible] = useState(false);
   const [refreshing, setRefreshing] = useState(false);
   const [profileData, setProfileData] = useState(null);
+  const [isExpanded, setIsExpanded] = useState(false);
+
   const wordLimit = 1000;
+
+  const router = useRouter();
 
   const { apiCall, user, isAuthenticated } = useAuth();
   // console.log('🩸👤 User from QuizGenerator: ', user);
-  console.log('✅🤡 isAuthenticated ', isAuthenticated);
+  // console.log('✅🤡 isAuthenticated ', isAuthenticated);
 
   const {
     usageStats,
@@ -63,9 +69,23 @@ const QuizGenerator = () => {
     dailyLimit,
   } = useUsage();
 
-  const router = useRouter();
-
   // console.log('✅hook info', remainingPrompts, dailyLimit);
+
+  /////////////////////////////////////
+  //////////////////////////
+  const getIsDisabled = (num) => {
+    if (!user && num > 1) return true;
+    if (user && !isPremium && num > 3) return true;
+    return false;
+  };
+
+  const getDisabledLabel = () => {
+    if (!user) return 'Login required';
+    if (user && !isPremium) return 'Premium required';
+    return '';
+  };
+  ////////////////////////////
+  /////////////////////
 
   // Track keyboard visibility
   useEffect(() => {
@@ -99,10 +119,36 @@ const QuizGenerator = () => {
     }
   }, [error]);
 
-  const onRefresh = async () => {
-    setRefreshing(true);
-    await fetchUsageStats(); // Add this line
-    setRefreshing(false); // Add this line
+  const handleRefresh = async () => {
+    if (!isExpanded) {
+      setRefreshing(true);
+      await fetchUsageStats(); // Add this line
+      setRefreshing(false); // Add this line
+    } else {
+      return null;
+    }
+  };
+
+  // Handler for word count updates
+  const handleWordCountChange = (count, limitReached) => {
+    setWordCount(count);
+    setIsLimitReached(limitReached);
+  };
+
+  const handleTextChange = (text) => {
+    // Always update the text value
+    setNumQuestionsText(text);
+
+    if (text === '') {
+      setNumQuestions(null);
+      return;
+    }
+
+    // Convert to number and validate
+    const num = parseInt(text, 10);
+    if (!isNaN(num) && num > 0 && num <= 50) {
+      setNumQuestions(num);
+    }
   };
 
   const handleGenerateQuestions = async (textContent) => {
@@ -136,52 +182,18 @@ const QuizGenerator = () => {
       }
       // setShowQuiz(true);
     } catch (err) {
-      // console.error('1️⃣❌Error generating questions:', err);
+      console.error('🔴 Axios error response:', err.response.data.message);
       const errorMessage = getErrorMessage(err);
-      // console.error('🤢Error generating questions:', errorMessage);
+      console.error('🗝️📞Error generating questions:', errorMessage);
       setError(errorMessage);
-
-      // console.log('🚿📞Error generating questions:', err.response);
-      // const errorMessage = getErrorMessage(err);
-      // console.error('✅Error message:', errorMessage);
-      // setError(errorMessage);
     } finally {
       setIsLoading(false);
     }
   };
 
-  // Handler for word count updates
-  const handleWordCountChange = (count, limitReached) => {
-    setWordCount(count);
-    setIsLimitReached(limitReached);
-  };
-
-  const handleTextChange = (text) => {
-    // Always update the text value
-    setNumQuestionsText(text);
-
-    // If the text is empty, we can either:
-    // Option 1: Allow empty input temporarily
-    // if (text === '') {
-    //   // Don't update numQuestions yet, just let them type
-    //   return;
-    // }
-
-    // Option 2: Or enforce a minimum of 1
-    if (text === '') {
-      setNumQuestions(null);
-      return;
-    }
-
-    // Convert to number and validate
-    const num = parseInt(text, 10);
-    if (!isNaN(num) && num > 0 && num <= 50) {
-      setNumQuestions(num);
-    }
-  };
-
   const handleSubmit = async () => {
     handleGenerateQuestions(content);
+    console.log('handle submit called with content:', content);
   };
 
   const handleQuizComplete = (result) => {
@@ -200,13 +212,13 @@ const QuizGenerator = () => {
     setFileName('');
   };
 
-  useEffect(() => {
-    if (isAuthenticated && usageLoading) {
-      setIsLoading(true);
-    } else {
-      setIsLoading(false);
-    }
-  }, [usageLoading]);
+  // useEffect(() => {
+  //   if (isAuthenticated && usageLoading) {
+  //     setIsLoading(true);
+  //   } else {
+  //     setIsLoading(false);
+  //   }
+  // }, [usageLoading]);
 
   const renderQuizGenerator = () => (
     <>
@@ -250,15 +262,84 @@ const QuizGenerator = () => {
         </View>
 
         {/* Number of Questions */}
+        {/* {user && (
+          <View style={[styles.questionsContainer]}>
+            <Text style={styles.questionLabel}>Questions</Text>
+            <TextInput
+              style={styles.questionInput}
+              value={numQuestions?.toString()}
+              onChangeText={handleTextChange}
+              keyboardType="numeric"
+              maxLength={2}
+            />
+          </View>
+        )} */}
         <View style={[styles.questionsContainer]}>
           <Text style={styles.questionLabel}>Questions</Text>
-          <TextInput
-            style={styles.questionInput}
-            value={numQuestions?.toString()}
-            onChangeText={handleTextChange}
-            keyboardType="numeric"
-            maxLength={2}
-          />
+
+          {/* Dropdown Header */}
+          <TouchableOpacity
+            style={styles.dropdownHeader}
+            onPress={() => setIsExpanded(!isExpanded)}
+          >
+            <Text style={styles.dropdownHeaderText}>
+              {numQuestions} question{numQuestions > 1 ? 's' : ''}
+            </Text>
+            <Text
+              style={[
+                styles.dropdownArrow,
+                isExpanded && styles.dropdownArrowUp,
+              ]}
+            >
+              ▼
+            </Text>
+          </TouchableOpacity>
+
+          {/* Expandable Options */}
+          {isExpanded && (
+            <View style={styles.dropdownOptions}>
+              <ScrollView style={styles.optionsScrollView} nestedScrollEnabled>
+                {Array.from({ length: 15 }, (_, i) => {
+                  const num = i + 1;
+                  const isDisabled = getIsDisabled(num);
+                  const isSelected = numQuestions === num;
+
+                  return (
+                    <TouchableOpacity
+                      key={num}
+                      style={[
+                        styles.dropdownOption,
+                        isDisabled && styles.dropdownOptionDisabled,
+                        isSelected && styles.dropdownOptionSelected,
+                      ]}
+                      onPress={() => {
+                        if (!isDisabled) {
+                          setNumQuestions(num);
+                          setIsExpanded(false);
+                        }
+                      }}
+                      disabled={isDisabled}
+                    >
+                      <Text
+                        style={[
+                          styles.dropdownOptionText,
+                          isDisabled && styles.dropdownOptionTextDisabled,
+                          isSelected && styles.dropdownOptionTextSelected,
+                        ]}
+                      >
+                        {num} question{num > 1 ? 's' : ''}
+                      </Text>
+                      {isDisabled && (
+                        <Text style={styles.disabledLabel}>
+                          {getDisabledLabel()}
+                        </Text>
+                      )}
+                    </TouchableOpacity>
+                  );
+                })}
+              </ScrollView>
+            </View>
+          )}
         </View>
       </View>
 
@@ -383,7 +464,11 @@ const QuizGenerator = () => {
             keyboardShouldPersistTaps="handled"
             showsVerticalScrollIndicator={false}
             refreshControl={
-              <RefreshControl refreshing={refreshing} onRefresh={onRefresh} />
+              <RefreshControl
+                refreshing={refreshing}
+                onRefresh={handleRefresh}
+                enabled={!isExpanded}
+              />
             }
           >
             {/* Usage Information Display */}
@@ -393,9 +478,11 @@ const QuizGenerator = () => {
                   ✨ Premium - Unlimited Quizzes
                 </Text>
               ) : (
-                <ThemedText variant="muted">
-                  Daily Quizes Remaining: {remainingPrompts}/3
-                </ThemedText>
+                user && (
+                  <ThemedText variant="muted">
+                    Daily Quizzes Remaining: {remainingPrompts}/3
+                  </ThemedText>
+                )
               )}
             </View>
             {/* Warning when running low */}
@@ -545,10 +632,101 @@ const styles = StyleSheet.create({
   activeTabText: {
     color: '#ffffff',
   },
+
+  requirementText: {
+    fontSize: 12,
+    color: '#ff6b6b',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+
   questionsContainer: {
     alignItems: 'center',
     justifyContent: 'center',
+    position: 'relative',
   },
+  /////////////////////////////
+  //////////////////////
+  dropdownHeader: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderRadius: 8,
+    paddingHorizontal: 12,
+    paddingVertical: 12,
+    backgroundColor: '#fff',
+    minHeight: 50,
+  },
+  dropdownHeaderText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownArrow: {
+    fontSize: 12,
+    color: '#666',
+  },
+  dropdownArrowUp: {
+    transform: [{ rotate: '180deg' }],
+  },
+  dropdownOptions: {
+    position: 'absolute',
+    top: '100%',
+    left: 0,
+    right: 0,
+    backgroundColor: '#fff',
+    borderWidth: 1,
+    borderColor: '#ddd',
+    borderTopWidth: 0,
+    borderBottomLeftRadius: 8,
+    borderBottomRightRadius: 8,
+    maxHeight: 200,
+    zIndex: 1000,
+    elevation: 5, // Android shadow
+    shadowColor: '#000', // iOS shadow
+    shadowOffset: {
+      width: 0,
+      height: 2,
+    },
+    shadowOpacity: 0.25,
+    shadowRadius: 3.84,
+  },
+  optionsScrollView: {
+    maxHeight: 200,
+  },
+  dropdownOption: {
+    paddingHorizontal: 12,
+    paddingVertical: 10,
+    borderBottomWidth: 1,
+    borderBottomColor: '#f0f0f0',
+  },
+  dropdownOptionDisabled: {
+    backgroundColor: '#f8f8f8',
+    opacity: 0.6,
+  },
+  dropdownOptionSelected: {
+    backgroundColor: '#e3f2fd',
+  },
+  dropdownOptionText: {
+    fontSize: 16,
+    color: '#333',
+  },
+  dropdownOptionTextDisabled: {
+    color: '#999',
+  },
+  dropdownOptionTextSelected: {
+    color: '#1976d2',
+    fontWeight: '600',
+  },
+  disabledLabel: {
+    fontSize: 12,
+    color: '#ff6b6b',
+    marginTop: 2,
+    fontStyle: 'italic',
+  },
+
+  ///////////////////
   questionLabel: {
     fontSize: 14,
     fontWeight: '500',

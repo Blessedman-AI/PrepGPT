@@ -12,12 +12,12 @@ import { useAuth } from '../../contexts/authContext';
 const Home = () => {
   const { isAuthenticated, isLoading } = useAuth(); // Use auth's isLoading
 
-  console.log(
-    '🏠 Home screen render - isAuthenticated:',
-    isAuthenticated,
-    'isLoading:',
-    isLoading
-  );
+  // console.log(
+  //   '🏠 Home screen render - isAuthenticated:',
+  //   isAuthenticated,
+  //   'isLoading:',
+  //   isLoading
+  // );
 
   return (
     <SafeAreaView style={styles.container}>

@@ -141,6 +141,7 @@ const QuizDisplay = ({ route }) => {
   const currentQuestion = questions[currentQuestionIndex];
   const isCurrentQuestionSubmitted = questionSubmitted[currentQuestionIndex];
 
+  // QUIZ QUESTIONS
   return (
     <SafeAreaView style={styles.safeArea}>
       <ScrollView contentContainerStyle={styles.scrollContainer}>

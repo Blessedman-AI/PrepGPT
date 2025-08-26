@@ -11,14 +11,14 @@ const getApiUrl = () => {
 
   // Add explicit check for undefined/null
   if (buildType === 'development') {
-    const devUrl = 'http://192.168.110.3:5000/api';
+    const devUrl = 'http://192.168.38.3:5000/api';
     console.log('✅ Using development URL:', devUrl);
     return devUrl;
   }
 
   // Fallback: if buildType is undefined, assume development for now
   if (!buildType || buildType === undefined) {
-    const fallbackUrl = 'http://192.168.110.3:5000/api';
+    const fallbackUrl = 'http://192.168.38.3:5000/api';
     console.log(
       '⚠️ BuildType is undefined, using fallback development URL:',
       fallbackUrl

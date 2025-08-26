@@ -4,6 +4,7 @@ import {
   useColorScheme,
   View,
   ActivityIndicator,
+  TouchableOpacity,
 } from 'react-native';
 import * as SplashScreen from 'expo-splash-screen';
 import { AuthProvider, useAuth } from '../contexts/authContext.js';
@@ -29,7 +30,7 @@ const AuthenticatedLayout = () => {
         console.warn('Failed to hide splash screen:', error);
         // Splash screen might already be hidden, which is fine
       }
-    }, 3000); // Adjust this duration as needed
+    }, 2000); // Adjust this duration as needed
 
     return () => clearTimeout(timer);
   }, []);
@@ -42,7 +43,7 @@ const AuthenticatedLayout = () => {
 
     const inAuthScreen =
       segments.includes('login') || segments.includes('signup');
-    const protectedScreens = ['paywall', 'quiz-display', 'quiz-results'];
+    const protectedScreens = ['paywall'];
     const protectedTabRoutes = ['account', 'settings']; // Protect both account and settings tabs
 
     const inProtectedScreen = protectedScreens.some((screen) =>
@@ -68,16 +69,6 @@ const AuthenticatedLayout = () => {
     }
   }, [isAuthenticated, segments, isLoading, router]);
 
-  // Show loading screen while determining auth state
-  if (isLoading) {
-    return (
-      <View style={{ flex: 1, justifyContent: 'center', alignItems: 'center' }}>
-        <ActivityIndicator size="large" />
-        <Text style={{ marginTop: 10 }}>Loading...</Text>
-      </View>
-    );
-  }
-
   return (
     <>
       <StatusBar style={colorScheme === 'dark' ? 'light' : 'dark'} />
@@ -93,11 +84,24 @@ const AuthenticatedLayout = () => {
             presentation: 'card',
             animation: 'slide_from_right',
             // presentation: 'formSheet',
-            headerShown: false,
           }}
         />
-
-        <Stack.Screen name="login" options={{ title: 'Login' }} />
+        <Stack.Screen
+          name="login"
+          options={{
+            title: 'Login',
+            presentation: 'modal',
+            // headerShown: true,
+            // headerRight: () => (
+            //   <TouchableOpacity
+            //     onPress={() => router.push('/')} // Using router directly
+            //     style={{ marginLeft: 15 }}
+            //   >
+            //     <Text style={{ color: '#007AFF', fontSize: 16 }}>Cancel</Text>
+            //   </TouchableOpacity>
+            // ),
+          }}
+        />
         <Stack.Screen name="signup" options={{ title: 'Signup' }} />
         <Stack.Screen
           name="quiz-display"

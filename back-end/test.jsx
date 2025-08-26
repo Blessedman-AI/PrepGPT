@@ -1,78 +1,82 @@
-import os from 'os';
-import fs from 'fs';
-import path from 'path';
+import express from 'express';
+import OpenAI from 'openai';
+import {
+  authenticateToken,
+  optionalAuth,
+  optionalUsePrompt,
+  usePrompt,
+} from '../middleware/authMiddleware.js';
 
-function getLocalIPAddress() {
-  const interfaces = os.networkInterfaces();
+const router = express.Router();
 
-  // Priority order: look for WiFi first, then Ethernet, then others
-  const priorityOrder = ['Wi-Fi', 'WiFi', 'wlan0', 'Ethernet', 'eth0'];
+// Initialize OpenAI client
+const openai = new OpenAI({
+  apiKey: process.env.OPENAI_API_KEY,
+});
 
-  // First, try priority interfaces
-  for (const name of priorityOrder) {
-    if (interfaces[name]) {
-      for (const networkInterface of interfaces[name]) {
-        if (networkInterface.family === 'IPv4' && !networkInterface.internal) {
-          return networkInterface.address;
-        }
-      }
-    }
-  }
+// Question generation endpoint
+router.post('/generate', optionalAuth, optionalUsePrompt, async (req, res) => {
+  // console.log('Received request body:🩸', req.body); // Log the request body
 
-  // Fallback: find any non-internal IPv4 address
-  for (const name of Object.keys(interfaces)) {
-    for (const networkInterface of interfaces[name]) {
-      if (networkInterface.family === 'IPv4' && !networkInterface.internal) {
-        return networkInterface.address;
-      }
-    }
-  }
-
-  throw new Error('No local IP address found');
-}
-
-function updateConfigFiles(ipAddress) {
-  const apiUrl = `http://${ipAddress}:5000/api`;
-
-  // Update app.json
   try {
-    const appJsonPath = path.join(process.cwd(), 'app.json');
-    const appJsonContent = JSON.parse(fs.readFileSync(appJsonPath, 'utf8'));
+    const { numQuestions, content, source } = req.body;
+    // Convert to number if it's a string
 
-    appJsonContent.expo.extra.apiUrl = apiUrl;
-
-    fs.writeFileSync(appJsonPath, JSON.stringify(appJsonContent, null, 2));
-    console.log(`✅ Updated app.json with API URL: ${apiUrl}`);
-  } catch (error) {
-    console.error('❌ Error updating app.json:', error.message);
-  }
-
-  // Update eas.json
-  try {
-    const easJsonPath = path.join(process.cwd(), 'eas.json');
-    const easJsonContent = JSON.parse(fs.readFileSync(easJsonPath, 'utf8'));
-
-    // Update all build profiles that have EXPO_PUBLIC_API_URL
-    if (easJsonContent.build.development?.env?.EXPO_PUBLIC_API_URL) {
-      easJsonContent.build.development.env.EXPO_PUBLIC_API_URL = apiUrl;
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
     }
-    if (easJsonContent.build.production?.env?.EXPO_PUBLIC_API_URL) {
-      easJsonContent.build.production.env.EXPO_PUBLIC_API_URL = apiUrl;
+    const questionCount = parseInt(numQuestions, 10);
+
+    // Basic validation
+    if (!questionCount || questionCount < 1 || questionCount > 15) {
+      throw new Error('Invalid number of questions. Must be between 1 and 15.');
     }
 
-    fs.writeFileSync(easJsonPath, JSON.stringify(easJsonContent, null, 2));
-    console.log(`✅ Updated eas.json with API URL: ${apiUrl}`);
-  } catch (error) {
-    console.error('❌ Error updating eas.json:', error.message);
-  }
-}
+    // Limit questions for guest users
+    const actualNumQuestions = req.isAuthenticated
+      ? numQuestions
+      : Math.min(numQuestions, 1);
 
-try {
-  const ipAddress = getLocalIPAddress();
-  console.log(`🌐 Detected IP address: ${ipAddress}`);
-  updateConfigFiles(ipAddress);
-  console.log('🎉 All config files updated successfully!');
-} catch (error) {
-  console.error('❌ Error:', error.message);
-  process.exit(1);
-}
+    const systemPrompt = getSystemPrompt(source);
+    const userPrompt = generatePrompt(numQuestions, content, source);
+
+    // console.log('🧬 questionRoutes: Generating questions for source:', source);
+
+    const completion = await openai.chat.completions.create({
+      model: 'gpt-3.5-turbo',
+      messages: [
+        {
+          role: 'system',
+          content: systemPrompt,
+        },
+        {
+          role: 'user',
+          content: userPrompt,
+        },
+      ],
+      response_format: { type: 'json_object' },
+      temperature: 1.0,
+    });
+
+    const resultString = completion.choices[0].message.content;
+    const resultObject = JSON.parse(resultString); // Convert string to JS object
+    return res.json({
+      success: true,
+      result: resultObject,
+      remainingPrompts: req.usageResult.remainingPrompts,
+    }); // Now sending real object inside JSON response
+  } catch (error) {
+    console.error(
+      '❌QuestionRoutes: Error generating questions (detailed):',
+      error
+    );
+    if (error.message.includes('bad XRef entry')) {
+      return res.status(400).json({
+        error: 'An error occured. Please try again',
+      });
+    }
+    return res.status(500).json({
+      error: error.message || 'Failed to generate questions',
+    });
+  }
+});

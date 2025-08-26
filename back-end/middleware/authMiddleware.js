@@ -142,3 +142,103 @@ export const usePrompt = async (req, res, next) => {
     });
   }
 };
+
+// Add the new optional middleware AFTER the existing ones
+export const optionalAuth = async (req, res, next) => {
+  const authHeader = req.headers.authorization;
+
+  // Initialize as false
+  req.isAuthenticated = false;
+  req.user = null;
+
+  if (authHeader && authHeader.startsWith('Bearer ')) {
+    try {
+      const token = authHeader.substring(7);
+      console.log('🔍 optionalAuth: Token received, length:', token.length);
+
+      const decoded = jwt.verify(token, process.env.JWT_SECRET);
+      // console.log('🔍 optionalAuth: Token decoded successfully');
+      // console.log('🔍 optionalAuth: Decoded payload:', {
+      //   id: decoded.id, // Changed from userId to id
+      //   exp: decoded.exp,
+      //   iat: decoded.iat,
+      // });
+
+      const user = await User.findById(decoded.id); // Changed from decoded.userId to decoded.id
+      // console.log('🔍 optionalAuth: Database lookup result:', {
+      //   userFound: !!user,
+      //   searchedId: decoded.id, // Changed from decoded.userId to decoded.id
+      //   userIdType: typeof decoded.id, // Changed from decoded.userId to decoded.id
+      // });
+
+      if (user) {
+        req.user = user;
+        req.isAuthenticated = true;
+        // console.log('✅ optionalAuth: User authenticated successfully', {
+        //   userId: user._id,
+        //   email: user.email,
+        // });
+      } else {
+        console.log(
+          '❌ optionalAuth: User not found in database for ID:',
+          decoded.id
+        );
+      }
+    } catch (error) {
+      console.log('❌ optionalAuth: Token error:', error.message);
+    }
+  } else {
+    console.log('🔍 optionalAuth: No auth header found');
+  }
+
+  // console.log('🔍 optionalAuth final state:', {
+  //   isAuthenticated: req.isAuthenticated,
+  //   hasUser: !!req.user,
+  //   userId: req.user?._id,
+  // });
+
+  next();
+};
+
+// This MUST come after optionalAuth because it depends on req.isAuthenticated
+export const optionalUsePrompt = async (req, res, next) => {
+  console.log('🔍 optionalUsePrompt middleware called');
+  console.log('- req.isAuthenticated:', req.isAuthenticated);
+  console.log('- req.user exists:', !!req.user);
+
+  // If user is authenticated, use the prompt
+  if (req.isAuthenticated && req.user) {
+    console.log('🔄 Authenticated user - calling PromptUsageManager.usePrompt');
+    try {
+      const usageResult = await PromptUsageManager.usePrompt(req.user._id);
+
+      if (!usageResult.success) {
+        return res.status(403).json({
+          success: false,
+          message: usageResult.error,
+          remainingPrompts: usageResult.remainingPrompts,
+        });
+      }
+
+      req.usageResult = usageResult;
+      console.log('✅ Usage updated, continuing to route handler');
+    } catch (error) {
+      console.error('Error in optionalUsePrompt:', error);
+      return res.status(500).json({
+        success: false,
+        message: 'Failed to process prompt usage',
+      });
+    }
+  } else {
+    // Otherwise, set a default usageResult for guest users
+    console.log('👤 Guest user - setting default usage result');
+    // For guest users, set a default usageResult
+    req.usageResult = {
+      success: true,
+      remainingPrompts: 'unlimited (1 question per quiz)',
+      user: null,
+    };
+  }
+
+  next();
+};

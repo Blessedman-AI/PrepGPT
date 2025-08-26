@@ -1,6 +1,11 @@
 import express from 'express';
 import OpenAI from 'openai';
-import { authenticateToken, usePrompt } from '../middleware/authMiddleware.js';
+import {
+  authenticateToken,
+  optionalAuth,
+  optionalUsePrompt,
+  usePrompt,
+} from '../middleware/authMiddleware.js';
 
 const router = express.Router();
 
@@ -9,21 +14,56 @@ const openai = new OpenAI({
   apiKey: process.env.OPENAI_API_KEY,
 });
 
-// Question generation endpoint
-router.post('/generate', authenticateToken, usePrompt, async (req, res) => {
-  // console.log('Received request body:🩸', req.body); // Log the request body
+// Helper function to validate question limits based on user status
+const validateQuestionLimit = (numQuestions, isAuthenticated, user) => {
+  const questionCount = parseInt(numQuestions, 10);
 
+  // Basic validation
+  if (!questionCount || questionCount < 1 || questionCount > 15) {
+    throw new Error('Invalid number of questions. Must be between 1 and 15.');
+  }
+
+  // Non-authenticated users: maximum 1 question
+  if (!isAuthenticated) {
+    if (questionCount > 1) {
+      throw new Error('Please log in to generate more than 1 question.');
+    }
+    return 1; // Force to 1 for non-authenticated users
+  }
+
+  // Authenticated but not premium: maximum 3 questions
+  // Assuming you have user.isPremium or similar field
+  if (user && !user.isPremium && questionCount > 3) {
+    throw new Error('Upgrade to Premium to generate more than 3 questions.');
+  }
+
+  // Return the validated question count
+  return questionCount;
+};
+
+// Question generation endpoint
+router.post('/generate', optionalAuth, optionalUsePrompt, async (req, res) => {
   try {
     const { numQuestions, content, source } = req.body;
 
-    // if (!content) {
-    //   return res.status(400).json({ error: 'Content is required' });
-    // }
+    if (!content) {
+      return res.status(400).json({ error: 'Content is required' });
+    }
+
+    // Validate question limits based on user status
+    const validatedQuestionCount = validateQuestionLimit(
+      numQuestions,
+      req.isAuthenticated,
+      req.user
+    );
 
     const systemPrompt = getSystemPrompt(source);
-    const userPrompt = generatePrompt(numQuestions, content, source);
+    const userPrompt = generatePrompt(validatedQuestionCount, content, source);
 
     // console.log('🧬 questionRoutes: Generating questions for source:', source);
+    // console.log(`🔢 Generating ${validatedQuestionCount} questions for user:`,
+    //   req.isAuthenticated ? (req.user?.isPremium ? 'Premium' : 'Free') : 'Guest'
+    // );
 
     const completion = await openai.chat.completions.create({
       model: 'gpt-3.5-turbo',
@@ -42,22 +82,37 @@ router.post('/generate', authenticateToken, usePrompt, async (req, res) => {
     });
 
     const resultString = completion.choices[0].message.content;
-    const resultObject = JSON.parse(resultString); // Convert string to JS object
+    const resultObject = JSON.parse(resultString);
+
     return res.json({
       success: true,
       result: resultObject,
       remainingPrompts: req.usageResult.remainingPrompts,
-    }); // Now sending real object inside JSON response
+      actualQuestions: validatedQuestionCount, // Let frontend know how many were actually generated
+    });
   } catch (error) {
     console.error(
       '❌QuestionRoutes: Error generating questions (detailed):',
       error
     );
-    if (error.message.includes('bad XRef entry')) {
+
+    // Handle validation errors with appropriate status codes
+    if (
+      error.message.includes('Please log in') ||
+      error.message.includes('Upgrade to Premium') ||
+      error.message.includes('Invalid number of questions')
+    ) {
       return res.status(400).json({
-        error: 'An error occured. Please try again',
+        error: error.message,
       });
     }
+
+    if (error.message.includes('bad XRef entry')) {
+      return res.status(400).json({
+        error: 'An error occurred. Please try again',
+      });
+    }
+
     return res.status(500).json({
       error: error.message || 'Failed to generate questions',
     });
@@ -72,11 +127,11 @@ function getSystemPrompt(source) {
   }
 }
 
-function generatePrompt(numQuestions, content, source) {
+function generatePrompt(validatedQuestionCount, content, source) {
   if (source === 'document') {
     // For document-based quizzes
     return `
-- Generate ${numQuestions} questions based on the following document content:
+- Generate ${validatedQuestionCount} questions based on the following document content:
 ${content}
 
 - Include a mix of single-choice (one correct answer) and multi-choice (multiple correct answers) questions.
@@ -126,7 +181,7 @@ IMPORTANT: Choose a DIFFERENT random topic than what you've chosen before. Do no
 
     promptText += `
 
-Please generate ${numQuestions} questions, using only single-choice or multi-choice question types.
+Please generate ${validatedQuestionCount} questions, using only single-choice or multi-choice question types.
 
 Format the questions in this JSON structure:
 {

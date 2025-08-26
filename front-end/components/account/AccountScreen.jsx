@@ -36,16 +36,13 @@ const AccountScreen = () => {
 
       setProfileData(response.data.data);
     } catch (error) {
-      // console.error('AS error ✅', error.message);
+      // console.error('❤️‍🩹', error.message);
+      // console.error('🗝️', error.response);
       if (
         error.message.includes('expired') ||
-        error.message.includes('Authentication required')
+        error.message.includes('status code 401')
       ) {
-        Alert.alert(
-          'Session Expired',
-          'Your session has expired. Please log in again.',
-          [{ text: 'OK', onPress: handleLogout }]
-        );
+        router.replace('/login');
       } else {
         console.error('Profile fetch error:', error);
         Alert.alert('Error', 'Failed to load profile data');

@@ -1,0 +1,54 @@
+import { useRouter } from 'expo-router';
+import { useAuth } from '../contexts/authContext';
+
+const handleGenerateQuestions = async (textContent) => {
+  const router = useRouter();
+  const { apiCall, user, isAuthenticated } = useAuth();
+  // 🔐 AUTHENTICATION CHECK - First line of defense
+  if (!isAuthenticated || !user) {
+    router.push('/login');
+    return;
+  }
+  // Early return if no content - this stops execution immediately
+  if (!textContent || textContent.trim() === '') {
+    // console.log('❌ Validation failed - setting error and returning');
+    setError('Please enter a prompt or upload a document');
+    return;
+  }
+
+  setIsLoading(true);
+  setError('');
+
+  try {
+    const parsedQuestions = await generateQuiz(
+      textContent,
+      numQuestions,
+      inputTab
+    );
+
+    setQuestions(parsedQuestions);
+    // Add this navigation code after successful quiz generation
+    if (parsedQuestions && parsedQuestions.length > 0) {
+      // This is the key part - navigate to the quiz display screen
+      router.push({
+        pathname: '/quiz-display',
+        params: { questions: JSON.stringify(parsedQuestions) },
+      });
+    } else {
+      throw new Error('No questions were generated');
+    }
+    // setShowQuiz(true);
+  } catch (err) {
+    // console.error('1️⃣❌Error generating questions:', err);
+    const errorMessage = getErrorMessage(err);
+    // console.error('🤢Error generating questions:', errorMessage);
+    setError(errorMessage);
+
+    // console.log('🚿📞Error generating questions:', err.response);
+    // const errorMessage = getErrorMessage(err);
+    // console.error('✅Error message:', errorMessage);
+    // setError(errorMessage);
+  } finally {
+    setIsLoading(false);
+  }
+};

@@ -1,5 +1,5 @@
 // hooks/useUsage.js
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useEffect, useCallback, use } from 'react';
 import { useAuth } from '../contexts/authContext';
 
 export const useUsage = () => {
@@ -12,7 +12,7 @@ export const useUsage = () => {
   const fetchUsageStats = useCallback(async () => {
     try {
       setUsageLoading(true);
-      // console.log('📩fetching usage stats');
+      console.log('📊 Fetching usage stats for user:', user?._id);
       setError(null);
 
       // console.log('📞 About to call /usage/stats');
@@ -92,11 +92,13 @@ export const useUsage = () => {
   const generateQuiz = useCallback(
     async (textContent, numQuestions, inputTab) => {
       try {
+        // For non-authenticated users, force numQuestions to 1
+        const actualNumQuestions = user ? numQuestions : 1;
         const response = await apiCall('/quiz/generate', {
           method: 'post',
           data: {
             content: textContent,
-            numQuestions,
+            numQuestions: actualNumQuestions,
             source: inputTab,
           },
         });
@@ -104,8 +106,11 @@ export const useUsage = () => {
         const result = response.data.result;
 
         if (response.data.success) {
-          // Refresh usage stats since prompt was consumed by middleware
-          await fetchUsageStats();
+          // Only refresh usage stats for authenticated users
+          if (user) {
+            await fetchUsageStats();
+          }
+          // No need to track guest usage since they get unlimited quizzes
         } else {
           throw new Error(response.data.error || 'Quiz generation failed');
         }
@@ -121,12 +126,13 @@ export const useUsage = () => {
 
         return parsedQuestions;
       } catch (err) {
-        const errorMessage = err.message;
-
-        console.error('📥 useUsage Error message:', errorMessage);
-        throw new Error(
-          errorMessage || 'Failed to generate quiz. Pleae try again.'
-        );
+        console.error('🤢useUsage Error message:', err.response.data);
+        throw err;
+        // const errorMessage = err.message;
+        // console.error('📥 useUsage Error message:', errorMessage);
+        // throw new Error(
+        //   errorMessage || 'Failed to generate quiz. Pleae try again.'
+        // );
       }
     },
     [apiCall, fetchUsageStats]
@@ -141,9 +147,11 @@ export const useUsage = () => {
   // Helper functions for UI
   const isPremium = usageStats?.subscriptionTier === 'premium';
   const canUse = isPremium || usageStats?.remainingPrompts > 0;
-  const remainingPrompts = isPremium
-    ? 'unlimited'
-    : usageStats?.remainingPrompts || 0;
+  const remainingPrompts = user
+    ? isPremium
+      ? 'unlimited'
+      : usageStats?.remainingPrompts || 0
+    : null;
 
   useEffect(() => {
     // console.log('💵🚿 useUsage effect - checking user:', user);
